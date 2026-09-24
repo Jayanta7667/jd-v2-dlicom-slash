@@ -84,7 +84,7 @@ h1{margin:9px 0 6px;font-size:clamp(32px,8vw,54px);letter-spacing:-.05em}
 .leaderHead h2{margin:0;font-size:22px}.leaderHead small{color:#8da5d0}
 #leaderClose{width:42px;height:42px;border-radius:12px;border:1px solid #ffffff18;background:#ffffff08;color:#fff;font-size:20px}
 .dailyScore{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:15px;background:#2f6bff16;border:1px solid #5e8dff30;margin-bottom:14px}.dailyScore b{font-size:20px}.dailyScore span{color:#91a7cc;font-size:10px;text-transform:uppercase;letter-spacing:.12em}
-.rankRow{display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #ffffff0b}.rankRow:last-child{border-bottom:0}.rankNum{color:#79a4ff;font-weight:900}.rankName{font-weight:700}.rankDate{color:#6f84aa;font-size:9px}.rankScore{font-weight:900}.playerBox{display:flex;gap:8px;margin-bottom:4px}.playerBox input{flex:1;min-width:0;padding:11px 12px;border-radius:12px;border:1px solid #5e8dff2b;background:#061126;color:#fff;outline:none;box-shadow:none;-webkit-appearance:none;appearance:none}.playerBox input::placeholder{color:#7187ad}.playerBox input:focus{border-color:#5e8dff88;box-shadow:0 0 0 2px #2f6bff16}.playerBox button{padding:0 14px;border-radius:12px;border:1px solid #2f6bff55;background:#2f6bff22;color:#9fc1ff;font-weight:800}.nameError{display:none;margin:0 0 10px;padding:7px 10px;border:1px solid #ff496455;border-radius:9px;background:#ff334d12;color:#ff8795;font-size:9px;font-weight:900;letter-spacing:.04em}.nameError.show{display:block}.myRank{display:flex;justify-content:space-between;gap:10px;padding:11px 13px;border:1px solid #5e8dff30;background:#ffffff08;border-radius:14px;margin-bottom:12px}.myRank span{color:#91a7cc;font-size:10px;text-transform:uppercase;letter-spacing:.1em}.myRank b{font-size:18px}.leaderNote{margin-top:12px;color:#7187ad;font-size:9px;line-height:1.45;text-align:center}
+.rankRow{display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #ffffff0b}.rankRow:last-child{border-bottom:0}.rankNum{color:#79a4ff;font-weight:900}.rankName{font-weight:700}.rankDate{color:#6f84aa;font-size:9px}.rankScore{font-weight:900}.playerBox{display:flex;gap:8px;margin-bottom:4px}.playerBox input{flex:1;min-width:0;padding:11px 12px;border-radius:12px;border:1px solid #5e8dff2b;background:#061126 !important;color:#fff !important;outline:none;box-shadow:none;-webkit-appearance:none;appearance:none}.playerBox input::placeholder{color:#7187ad}.playerBox input:focus{border-color:#5e8dff88;box-shadow:0 0 0 2px #2f6bff16}.playerBox button{padding:0 14px;border-radius:12px;border:1px solid #2f6bff55;background:#2f6bff22;color:#9fc1ff;font-weight:800}.nameError{display:none;margin:0 0 10px;padding:7px 10px;border:1px solid #ff496455;border-radius:9px;background:#ff334d12;color:#ff8795;font-size:9px;font-weight:900;letter-spacing:.04em}.nameError.show{display:block}.myRank{display:flex;justify-content:space-between;gap:10px;padding:11px 13px;border:1px solid #5e8dff30;background:#ffffff08;border-radius:14px;margin-bottom:12px}.myRank span{color:#91a7cc;font-size:10px;text-transform:uppercase;letter-spacing:.1em}.myRank b{font-size:18px}.leaderNote{margin-top:12px;color:#7187ad;font-size:9px;line-height:1.45;text-align:center}
 .goldenBadge{display:inline-block;margin-left:5px;color:#ffd45c}
 
 /* V2.1 professional home + power-ups */
@@ -139,7 +139,9 @@ h1{margin:9px 0 6px;font-size:clamp(32px,8vw,54px);letter-spacing:-.05em}
 @keyframes heroFloat{0%,100%{translate:0 4px}50%{translate:0 -7px}}
 .playerNameHome{max-width:490px;margin:7px auto 12px;display:flex;align-items:center;gap:7px;padding:8px;border:1px solid #5e8dff2b;border-radius:14px;background:#061126aa}
 .playerNameHome span{font-size:8px;color:#7892bd;font-weight:1000;letter-spacing:.12em;white-space:nowrap}
-.playerNameHome input{flex:1;min-width:0;background:#061126;border:1px solid #5e8dff2b;border-radius:9px;padding:8px 10px;color:#fff;outline:none;font-size:11px;box-shadow:none;-webkit-appearance:none;appearance:none}
+.playerNameHome input{flex:1;min-width:0;background:#061126 !important;border:1px solid #5e8dff2b;border-radius:9px;padding:8px 10px;color:#fff;outline:none;font-size:11px;box-shadow:none;-webkit-appearance:none;appearance:none}
+.playerNameHome input:-webkit-autofill,.playerNameHome input:-webkit-autofill:hover,.playerNameHome input:-webkit-autofill:focus,.playerBox input:-webkit-autofill,.playerBox input:-webkit-autofill:hover,.playerBox input:-webkit-autofill:focus{-webkit-text-fill-color:#fff!important;-webkit-box-shadow:0 0 0 1000px #061126 inset!important;box-shadow:0 0 0 1000px #061126 inset!important;transition:background-color 9999s ease-in-out 0s}
+.homeNameError{display:none;max-width:490px;margin:-5px auto 10px;padding:6px 10px;border:1px solid #ff496455;border-radius:9px;background:#ff334d12;color:#ff8795;font-size:9px;font-weight:900;letter-spacing:.04em}.homeNameError.show{display:block}
 .playerNameHome input:focus{border-color:#5e8dff88;box-shadow:0 0 0 2px #2f6bff16}
 .playerNameHome button{border:1px solid #5e8dff55;background:#2f6bff20;color:#9fc0ff;border-radius:9px;padding:8px 11px;font-size:8px;font-weight:1000}
 
@@ -209,6 +211,7 @@ body.bomb-shake #game,body.bomb-shake #hud,body.bomb-shake #fx{animation:bombSha
     <input id="homePlayerName" maxlength="18" autocomplete="nickname" placeholder="Enter your name">
     <button id="homeSaveName" type="button">SAVE</button>
   </div>
+  <div id="homeNameError" class="homeNameError">NAME ALREADY EXISTS</div>
   <div class="volumePanel" aria-label="Audio volume controls">
     <div class="volumeRow"><label for="musicVolume">MUSIC</label><input id="musicVolume" type="range" min="0" max="100" value="72"><output id="musicVolumeOut">72%</output></div>
     <div class="volumeRow"><label for="sfxVolume">SFX</label><input id="sfxVolume" type="range" min="0" max="100" value="82"><output id="sfxVolumeOut">82%</output></div>
@@ -458,8 +461,11 @@ function showFX(t){
  showFX.t=setTimeout(()=>fx.classList.remove("show"),650);
 }
 function showNameError(show){
+ const on=!!show;
  const el=document.getElementById("nameError");
- if(el)el.classList.toggle("show",!!show);
+ const home=document.getElementById("homeNameError");
+ if(el)el.classList.toggle("show",on);
+ if(home)home.classList.toggle("show",on);
 }
 
 function spawn(progress=0, forcedKey=null){
@@ -959,16 +965,34 @@ async function endGame(){
  paused=false;
  stopMusic();
  soundGameOver();
- bestScore=Math.max(bestScore,score); localStorage.setItem("dlicomBest",String(bestScore));
- const saved=await saveScore();
- if(saved) await renderLeaderboard();
- pauseBtn.textContent="Ⅱ";
+ bestScore=Math.max(bestScore,score);
+ localStorage.setItem("dlicomBest",String(bestScore));
+
+ const pauseText=document.getElementById("pause");
+ if(pauseText)pauseText.textContent="Ⅱ";
  const title=document.getElementById("title");
  const desc=document.getElementById("desc");
- if(title) title.textContent="Game Over";
- if(desc) desc.innerHTML="Final score: <b>"+score+"</b><br>Best: <b>"+bestScore+"</b><br>Mascots sliced: <b>"+slicedCount+"</b> • Bonus lives: <b>"+bonusLives+"</b>";
+ if(title)title.textContent="Game Over";
+ if(desc)desc.innerHTML="Final score: <b>"+score+"</b><br>Best: <b>"+bestScore+"</b><br>Mascots sliced: <b>"+slicedCount+"</b> • Bonus lives: <b>"+bonusLives+"</b>";
  startBtn.textContent="PLAY AGAIN";
  overlay.classList.remove("hidden");
+
+ // Never keep the game-over screen waiting on the network.
+ // Save first, then refresh the leaderboard when the save succeeds.
+ try{
+   const saved=await Promise.race([
+     saveScore(),
+     new Promise(resolve=>setTimeout(()=>resolve(false),5000))
+   ]);
+   if(saved===true){
+     try{ await renderLeaderboard(); }catch(e){ console.warn("Leaderboard refresh failed",e); }
+   }else{
+     // Even if the network save fails, keep the game-over screen usable.
+     try{ await renderLeaderboard(); }catch(e){ console.warn("Leaderboard refresh failed",e); }
+   }
+ }catch(e){
+   console.warn("Game-over save failed",e);
+ }
 }
 function togglePause(){if(!running)return;paused=!paused;pauseBtn.textContent=paused?"▶":"Ⅱ";if(paused)stopMusic();else startMusic()}
 
