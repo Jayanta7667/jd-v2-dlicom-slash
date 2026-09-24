@@ -84,7 +84,7 @@ h1{margin:9px 0 6px;font-size:clamp(32px,8vw,54px);letter-spacing:-.05em}
 .leaderHead h2{margin:0;font-size:22px}.leaderHead small{color:#8da5d0}
 #leaderClose{width:42px;height:42px;border-radius:12px;border:1px solid #ffffff18;background:#ffffff08;color:#fff;font-size:20px}
 .dailyScore{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:15px;background:#2f6bff16;border:1px solid #5e8dff30;margin-bottom:14px}.dailyScore b{font-size:20px}.dailyScore span{color:#91a7cc;font-size:10px;text-transform:uppercase;letter-spacing:.12em}
-.rankRow{display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #ffffff0b}.rankRow:last-child{border-bottom:0}.rankNum{color:#79a4ff;font-weight:900}.rankName{font-weight:700}.rankDate{color:#6f84aa;font-size:9px}.rankScore{font-weight:900}.playerBox{display:flex;gap:8px;margin-bottom:12px}.playerBox input{flex:1;min-width:0;padding:11px 12px;border-radius:12px;border:1px solid #ffffff18;background:#061126;color:#fff;outline:none}.playerBox button{padding:0 14px;border-radius:12px;border:1px solid #2f6bff55;background:#2f6bff22;color:#fff;font-weight:800}.myRank{display:flex;justify-content:space-between;gap:10px;padding:11px 13px;border:1px solid #5e8dff30;background:#ffffff08;border-radius:14px;margin-bottom:12px}.myRank span{color:#91a7cc;font-size:10px;text-transform:uppercase;letter-spacing:.1em}.myRank b{font-size:18px}.leaderNote{margin-top:12px;color:#7187ad;font-size:9px;line-height:1.45;text-align:center}
+.rankRow{display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #ffffff0b}.rankRow:last-child{border-bottom:0}.rankNum{color:#79a4ff;font-weight:900}.rankName{font-weight:700}.rankDate{color:#6f84aa;font-size:9px}.rankScore{font-weight:900}.playerBox{display:flex;gap:8px;margin-bottom:4px}.playerBox input{flex:1;min-width:0;padding:11px 12px;border-radius:12px;border:1px solid #5e8dff2b;background:#061126;color:#fff;outline:none}.playerBox input::placeholder{color:#7187ad}.playerBox input:focus{border-color:#5e8dff88;box-shadow:0 0 0 2px #2f6bff16}.playerBox button{padding:0 14px;border-radius:12px;border:1px solid #2f6bff55;background:#2f6bff22;color:#9fc1ff;font-weight:800}.nameError{display:none;margin:0 0 10px;padding:7px 10px;border:1px solid #ff496455;border-radius:9px;background:#ff334d12;color:#ff8795;font-size:9px;font-weight:900;letter-spacing:.04em}.nameError.show{display:block}.myRank{display:flex;justify-content:space-between;gap:10px;padding:11px 13px;border:1px solid #5e8dff30;background:#ffffff08;border-radius:14px;margin-bottom:12px}.myRank span{color:#91a7cc;font-size:10px;text-transform:uppercase;letter-spacing:.1em}.myRank b{font-size:18px}.leaderNote{margin-top:12px;color:#7187ad;font-size:9px;line-height:1.45;text-align:center}
 .goldenBadge{display:inline-block;margin-left:5px;color:#ffd45c}
 
 /* V2.1 professional home + power-ups */
@@ -171,7 +171,7 @@ body.bomb-shake #game,body.bomb-shake #hud,body.bomb-shake #fx{animation:bombSha
 <div id="leaderModal" aria-hidden="true">
  <div class="leaderCard" role="dialog" aria-modal="true" aria-labelledby="leaderTitle">
   <div class="leaderHead"><div><h2 id="leaderTitle">Global Leaderboard</h2><small>Highest score • player rank</small></div><button id="leaderClose" type="button" aria-label="Close leaderboard">×</button></div>
-  <div class="playerBox"><input id="playerName" maxlength="18" placeholder="Enter player name"><button id="saveName" type="button">SAVE</button></div>
+  <div class="playerBox"><input id="playerName" maxlength="18" placeholder="Enter player name"><button id="saveName" type="button">SAVE</button></div><div id="nameError" class="nameError">NAME ALREADY EXISTS</div>
   <div class="myRank"><div><span>My Rank</span><br><b id="myRank">—</b></div><div><span>My Best</span><br><b id="myBest">0</b></div></div>
   <div class="dailyScore"><div><span>Daily High Score</span><br><b id="dailyHigh">0</b></div><div>🔥</div></div>
   <div id="leaderRows"></div>
@@ -456,6 +456,10 @@ function livesUI(){
 function showFX(t){
  fx.textContent=t;fx.classList.add("show");clearTimeout(showFX.t);
  showFX.t=setTimeout(()=>fx.classList.remove("show"),650);
+}
+function showNameError(show){
+ const el=document.getElementById("nameError");
+ if(el)el.classList.toggle("show",!!show);
 }
 
 function spawn(progress=0, forcedKey=null){
@@ -760,6 +764,7 @@ async function isNameAvailable(name){
  }
 }
 async function setPlayerName(name,source){
+ showNameError(false);
  const clean=normalizePlayerName(name)||"Player";
  const oldName=getPlayerName();
  if(nameKey(clean)===nameKey(oldName)){
@@ -771,6 +776,7 @@ async function setPlayerName(name,source){
  }
  if(!(await isNameAvailable(clean))){
    const el=document.getElementById(source==="home"?"homePlayerName":"playerName");if(el)el.value=oldName==="Player"?"":oldName;
+   showNameError(true);
    showFX("NAME ALREADY TAKEN");
    return false;
  }
@@ -791,7 +797,7 @@ async function setPlayerName(name,source){
  localStorage.setItem("dlicomPlayerName",clean);
  localStorage.setItem("dlicomLastSyncedName",clean);
  const el=document.getElementById(source==="home"?"homePlayerName":"playerName");if(el)el.value=clean;
- renderLeaderboard();syncHomePlayerName();showFX("NAME SAVED");
+ renderLeaderboard();syncHomePlayerName();showNameError(false);showFX("NAME SAVED");
  return true;
 }
 async function saveHomePlayerName(){
@@ -943,7 +949,7 @@ function startGame(){
  spawn(0,"white");
  objs.forEach((o,i)=>{o.x0=W*(.14+i*.18);o.x1=W*(.82-i*.13);o.x=o.x0;o.t=Math.min(.12,i*.018);});
 }
-function endGame(){
+async function endGame(){
  if(lives>0)return;
  lives=0;
  livesUI();
@@ -952,7 +958,7 @@ function endGame(){
  stopMusic();
  soundGameOver();
  bestScore=Math.max(bestScore,score); localStorage.setItem("dlicomBest",String(bestScore));
- saveScore();
+ await saveScore();
  renderLeaderboard();
  pauseBtn.textContent="Ⅱ";
  const title=document.getElementById("title");
@@ -970,6 +976,8 @@ function togglePause(){if(!running)return;paused=!paused;pauseBtn.textContent=pa
 document.getElementById("saveName")?.addEventListener("click",savePlayerName);
 document.getElementById("homeSaveName")?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();saveHomePlayerName()});
 document.getElementById("homePlayerName")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();saveHomePlayerName()}});
+document.getElementById("homePlayerName")?.addEventListener("input",()=>showNameError(false));
+document.getElementById("playerName")?.addEventListener("input",()=>showNameError(false));
 document.getElementById("homePlayerName")?.addEventListener("pointerdown",e=>e.stopPropagation());
 document.getElementById("homePlayerName")?.addEventListener("touchstart",e=>e.stopPropagation(),{passive:true});
 document.getElementById("homeLeaderOpen")?.addEventListener("click",e=>{e.preventDefault();openLeaderboard()});
