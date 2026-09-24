@@ -728,9 +728,8 @@ function dayKey(){
  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 }
 function getPlayerId(){
- let id=localStorage.getItem("dlicomPlayerId");
- if(!id){id=(crypto.randomUUID?crypto.randomUUID():"p_"+Date.now()+"_"+Math.random().toString(36).slice(2));localStorage.setItem("dlicomPlayerId",id)}
- return id;
+ const name=getPlayerName();
+ return "name:"+name.trim().toLowerCase().replace(/\s+/g," ");
 }
 function getPlayerName(){return (localStorage.getItem("dlicomPlayerName")||"Player").trim().slice(0,18)||"Player"}
 function syncHomePlayerName(){
@@ -748,7 +747,7 @@ function savePlayerName(){
  const name=(el?.value||"Player").trim().slice(0,18)||"Player";
  localStorage.setItem("dlicomPlayerName",name);if(el)el.value=name;renderLeaderboard();
 }
-function sbHeaders(){return {"apikey":SUPABASE_ANON_KEY,"Authorization":"Bearer "+SUPABASE_ANON_KEY,"Content-Type":"application/json"}}
+function sbHeaders(){return {"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"}}
 async function sbFetch(path,options={}){
  if(!GLOBAL_LEADERBOARD)throw new Error("Global leaderboard is not configured");
  const r=await fetch(SUPABASE_URL+"/rest/v1/"+path,{...options,headers:{...sbHeaders(),...(options.headers||{})}});
@@ -771,8 +770,8 @@ async function saveScore(){
    return;
  }
  try{
-   // One row per player: only create/update when this is a new personal best.
-   const mine=await sbFetch("dlicom_scores?select=id%2Cscore&player_id=eq."+encodeURIComponent(playerId)+"&limit=1");
+   // One visible entry per player name. A higher score updates the player's best.
+   const mine=await sbFetch("dlicom_scores?select=id%2Cscore&name=eq."+encodeURIComponent(name)+"&order=score.desc&limit=1");
    const current=mine?.[0];
    if(!current){
      await sbFetch("dlicom_scores",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({player_id:playerId,name,score:value,day})});
@@ -796,18 +795,19 @@ async function renderLeaderboard(){
    renderHomeLeaderboard();return;
  }
  try{
-   const rawRows=await sbFetch("dlicom_scores?select=player_id%2Cname%2Cscore%2Cday%2Ccreated_at&order=score.desc%2Ccreated_at.asc&limit=100");
-   // Defensive dedupe: show only the highest score for each player even if old duplicate rows exist.
-   const byPlayer=new Map();
+   const rawRows=await sbFetch("dlicom_scores?select=player_id%2Cname%2Cscore%2Cday%2Ccreated_at&order=score.desc%2Ccreated_at.asc&limit=1000");
+   // Dedupe by normalized player name so the same person appears only once, even across devices.
+   const byName=new Map();
    for(const r of (rawRows||[])){
-     const key=r.player_id||("name:"+(r.name||"Player").trim().toLowerCase());
-     const prev=byPlayer.get(key);
-     if(!prev || Number(r.score||0)>Number(prev.score||0) || (Number(r.score||0)===Number(prev.score||0) && String(r.created_at||"")<String(prev.created_at||""))) byPlayer.set(key,r);
+     const key=(r.name||"Player").trim().toLowerCase().replace(/\s+/g," ");
+     const prev=byName.get(key);
+     if(!prev || Number(r.score||0)>Number(prev.score||0) || (Number(r.score||0)===Number(prev.score||0) && String(r.created_at||"")<String(prev.created_at||""))) byName.set(key,r);
    }
-   const rows=[...byPlayer.values()].sort((a,b)=>Number(b.score||0)-Number(a.score||0)||String(a.created_at||"").localeCompare(String(b.created_at||"")));
-   const mine=await sbFetch("dlicom_scores?select=score&player_id=eq."+encodeURIComponent(getPlayerId())+"&order=score.desc&limit=1");
-   const best=mine?.[0]?.score||0;
-   const rank=best?rows.findIndex(r=>r.player_id===getPlayerId())+1:0;
+   const rows=[...byName.values()].sort((a,b)=>Number(b.score||0)-Number(a.score||0)||String(a.created_at||"").localeCompare(String(b.created_at||"")));
+   const myKey=name.trim().toLowerCase().replace(/\s+/g," ");
+   const myRow=byName.get(myKey);
+   const best=Number(myRow?.score||0);
+   const rank=best?rows.findIndex(r=>(r.name||"").trim().toLowerCase().replace(/\s+/g," ")===myKey)+1:0;
    const daily=await sbFetch("dlicom_scores?select=name%2Cscore%2Cday%2Cplayer_id&day=eq."+encodeURIComponent(dayKey())+"&order=score.desc&limit=100");
    const dailyBest=(daily||[]).reduce((m,r)=>Math.max(m,Number(r.score)||0),0);
    if(dailyEl)dailyEl.textContent=dailyBest;
