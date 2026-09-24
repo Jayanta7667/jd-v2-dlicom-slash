@@ -1074,10 +1074,30 @@ leaderModal.addEventListener("click",e=>{if(e.target===leaderModal)closeLeaderbo
 pauseBtn.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();togglePause()});
 
 
-window.__dlicomStart=function(e){
+let startCheckingName=false;
+window.__dlicomStart=async function(e){
   if(e){e.preventDefault();e.stopPropagation();}
-  try{ startGame(); }
-  catch(err){ console.error("DLICOM Start error:", err); }
+  if(startCheckingName)return false;
+  const nameInput=document.getElementById("homePlayerName");
+  const entered=normalizePlayerName(nameInput?.value||"");
+  const homeErr=document.getElementById("homeNameError");
+  if(!entered){
+    if(homeErr){homeErr.textContent="ENTER YOUR NAME TO START";homeErr.classList.add("show");}
+    nameInput?.focus();
+    showFX("ENTER YOUR NAME");
+    return false;
+  }
+  if(homeErr){homeErr.classList.remove("show");homeErr.textContent="NAME ALREADY EXISTS";}
+  startCheckingName=true;
+  try{
+    const ok=await setPlayerName(entered,"home");
+    if(!ok)return false;
+    startGame();
+  }catch(err){
+    console.error("DLICOM Start error:", err);
+  }finally{
+    startCheckingName=false;
+  }
   return false;
 };
 const startButton=document.getElementById("start");
