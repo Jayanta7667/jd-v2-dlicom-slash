@@ -728,10 +728,15 @@ function dayKey(){
  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 }
 function getPlayerId(){
- const name=getPlayerName();
- return "name:"+name.trim().toLowerCase().replace(/\s+/g," ");
+ let id=localStorage.getItem("dlicomPlayerId");
+ if(!id){
+   id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():("p_"+Date.now().toString(36)+Math.random().toString(36).slice(2));
+   localStorage.setItem("dlicomPlayerId",id);
+ }
+ return id;
 }
 function getPlayerName(){return (localStorage.getItem("dlicomPlayerName")||"Player").trim().slice(0,18)||"Player"}
+function getLastSyncedName(){return (localStorage.getItem("dlicomLastSyncedName")||"").trim().slice(0,18)}
 function syncHomePlayerName(){
  const el=document.getElementById("homePlayerName");
  if(el)el.value=getPlayerName()==="Player"?"":getPlayerName();
@@ -755,29 +760,51 @@ async function sbFetch(path,options={}){
  return r.status===204?null:r.json();
 }
 async function saveScore(){
- const name=getPlayerName(), value=Number(score)||0, day=dayKey(), playerId=getPlayerId();
+ const name=getPlayerName(), value=Number(score)||0, day=dayKey(), playerId=getPlayerId(), lastName=getLastSyncedName();
  // Always keep a local best as fallback.
  const localBest=Math.max(Number(localStorage.getItem("dlicomBest")||0),value);localStorage.setItem("dlicomBest",String(localBest));
  if(!GLOBAL_LEADERBOARD){
    let rows=[];try{rows=JSON.parse(localStorage.getItem("dlicomScores")||"[]")}catch(_){rows=[]}
-   const mine=rows.find(r=>r.player_id===playerId);
+   let mine=rows.find(r=>r.player_id===playerId);
+   if(!mine && lastName)mine=rows.find(r=>(r.name||"").trim().toLowerCase().replace(/\s+/g," ")===lastName.trim().toLowerCase().replace(/\s+/g," "));
    if(mine){
-     if(value>Number(mine.score||0)){mine.score=value;mine.name=name;mine.date=day;}
+     mine.player_id=playerId;mine.name=name;
+     if(value>Number(mine.score||0))mine.score=value;
+     mine.date=day;
    }else{
      rows.push({player_id:playerId,score:value,date:day,name});
    }
    rows.sort((a,b)=>Number(b.score||0)-Number(a.score||0));localStorage.setItem("dlicomScores",JSON.stringify(rows.slice(0,100)));
+   localStorage.setItem("dlicomLastSyncedName",name);
    return;
  }
  try{
-   // One visible entry per player name. A higher score updates the player's best.
-   const mine=await sbFetch("dlicom_scores?select=id%2Cscore&name=eq."+encodeURIComponent(name)+"&order=score.desc&limit=1");
-   const current=mine?.[0];
+   // Player identity is stable on this device. Changing the display name only renames the same leaderboard entry.
+   let mine=await sbFetch("dlicom_scores?select=id%2Cplayer_id%2Cname%2Cscore&player_id=eq."+encodeURIComponent(playerId)+"&order=score.desc&limit=1");
+   let current=mine?.[0];
+
+   // Migrate an existing entry created by the older name-based version. This keeps old scores instead of creating a new player.
+   if(!current && lastName){
+     const old=await sbFetch("dlicom_scores?select=id%2Cplayer_id%2Cname%2Cscore&name=eq."+encodeURIComponent(lastName)+"&order=score.desc&limit=1");
+     current=old?.[0];
+     if(current){
+       await sbFetch("dlicom_scores?id=eq."+encodeURIComponent(current.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({player_id:playerId,name,score:Math.max(Number(current.score||0),value),day})});
+       localStorage.setItem("dlicomLastSyncedName",name);
+       await renderLeaderboard();
+       return;
+     }
+   }
+
    if(!current){
      await sbFetch("dlicom_scores",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify({player_id:playerId,name,score:value,day})});
-   }else if(value>Number(current.score||0)){
-     await sbFetch("dlicom_scores?id=eq."+encodeURIComponent(current.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({name,score:value,day})});
+   }else{
+     const best=Math.max(Number(current.score||0),value);
+     // Always update the name so renaming never creates another leaderboard entry.
+     if(current.name!==name || best>Number(current.score||0)){
+       await sbFetch("dlicom_scores?id=eq."+encodeURIComponent(current.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({name,score:best,day})});
+     }
    }
+   localStorage.setItem("dlicomLastSyncedName",name);
    await renderLeaderboard();
  }catch(e){console.warn("Global leaderboard save failed",e);showFX("LEADERBOARD OFFLINE");}
 }
