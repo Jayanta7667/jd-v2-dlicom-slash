@@ -741,16 +741,66 @@ function syncHomePlayerName(){
  const el=document.getElementById("homePlayerName");
  if(el)el.value=getPlayerName()==="Player"?"":getPlayerName();
 }
-function saveHomePlayerName(){
- const el=document.getElementById("homePlayerName");
- const name=(el?.value||"").trim().slice(0,18);
- if(name)localStorage.setItem("dlicomPlayerName",name); else localStorage.removeItem("dlicomPlayerName");
- renderLeaderboard();syncHomePlayerName();showFX(name?"NAME SAVED":"ENTER A NAME");
+function normalizePlayerName(v){return String(v||"").trim().replace(/\s+/g," ").slice(0,18)}
+function nameKey(v){return normalizePlayerName(v).toLowerCase()}
+async function isNameAvailable(name){
+ const clean=normalizePlayerName(name);
+ if(!clean)return false;
+ const myId=getPlayerId();
+ if(!GLOBAL_LEADERBOARD){
+   let rows=[];try{rows=JSON.parse(localStorage.getItem("dlicomScores")||"[]")}catch(_){rows=[]}
+   return !rows.some(r=>nameKey(r.name)===nameKey(clean)&&r.player_id!==myId);
+ }
+ try{
+   const rows=await sbFetch("dlicom_scores?select=id%2Cplayer_id%2Cname&limit=1000");
+   return !(rows||[]).some(r=>nameKey(r.name)===nameKey(clean)&&r.player_id!==myId);
+ }catch(e){
+   console.warn("Name availability check failed",e);
+   return false;
+ }
 }
-function savePlayerName(){
+async function setPlayerName(name,source){
+ const clean=normalizePlayerName(name)||"Player";
+ const oldName=getPlayerName();
+ if(nameKey(clean)===nameKey(oldName)){
+   localStorage.setItem("dlicomPlayerName",clean);
+   localStorage.setItem("dlicomLastSyncedName",clean);
+   const el=document.getElementById(source==="home"?"homePlayerName":"playerName");if(el)el.value=clean;
+   renderLeaderboard();syncHomePlayerName();showFX("NAME SAVED");
+   return true;
+ }
+ if(!(await isNameAvailable(clean))){
+   const el=document.getElementById(source==="home"?"homePlayerName":"playerName");if(el)el.value=oldName==="Player"?"":oldName;
+   showFX("NAME ALREADY TAKEN");
+   return false;
+ }
+ const playerId=getPlayerId();
+ if(GLOBAL_LEADERBOARD){
+   try{
+     // Rename the existing player row immediately, so the old name cannot remain visible.
+     const mine=await sbFetch("dlicom_scores?select=id%2Cname%2Cscore&player_id=eq."+encodeURIComponent(playerId)+"&order=score.desc&limit=1");
+     if(mine?.[0]){
+       await sbFetch("dlicom_scores?id=eq."+encodeURIComponent(mine[0].id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({name:clean})});
+     }
+   }catch(e){
+     console.warn("Player rename failed",e);
+     showFX("NAME SAVE FAILED");
+     return false;
+   }
+ }
+ localStorage.setItem("dlicomPlayerName",clean);
+ localStorage.setItem("dlicomLastSyncedName",clean);
+ const el=document.getElementById(source==="home"?"homePlayerName":"playerName");if(el)el.value=clean;
+ renderLeaderboard();syncHomePlayerName();showFX("NAME SAVED");
+ return true;
+}
+async function saveHomePlayerName(){
+ const el=document.getElementById("homePlayerName");
+ await setPlayerName(el?.value||"", "home");
+}
+async function savePlayerName(){
  const el=document.getElementById("playerName");
- const name=(el?.value||"Player").trim().slice(0,18)||"Player";
- localStorage.setItem("dlicomPlayerName",name);if(el)el.value=name;renderLeaderboard();
+ await setPlayerName(el?.value||"Player", "leader");
 }
 function sbHeaders(){return {"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"}}
 async function sbFetch(path,options={}){
@@ -779,16 +829,22 @@ async function saveScore(){
    return;
  }
  try{
-   // Player identity is stable on this device. Changing the display name only renames the same leaderboard entry.
+   // A player ID is permanent on this device. A display name must also be unique across players.
+   const allNamed=await sbFetch("dlicom_scores?select=id%2Cplayer_id%2Cname%2Cscore&limit=1000");
+   const nameOwner=(allNamed||[]).find(r=>nameKey(r.name)===nameKey(name));
+   if(nameOwner && nameOwner.player_id!==playerId){
+     showFX("NAME ALREADY TAKEN");
+     return;
+   }
    let mine=await sbFetch("dlicom_scores?select=id%2Cplayer_id%2Cname%2Cscore&player_id=eq."+encodeURIComponent(playerId)+"&order=score.desc&limit=1");
    let current=mine?.[0];
 
-   // Migrate an existing entry created by the older name-based version. This keeps old scores instead of creating a new player.
-   if(!current && lastName){
+   // Migrate an older row only when its name belongs to this same device/player.
+   if(!current && lastName && !nameOwner){
      const old=await sbFetch("dlicom_scores?select=id%2Cplayer_id%2Cname%2Cscore&name=eq."+encodeURIComponent(lastName)+"&order=score.desc&limit=1");
      current=old?.[0];
-     if(current){
-       await sbFetch("dlicom_scores?id=eq."+encodeURIComponent(current.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({player_id:playerId,name,score:Math.max(Number(current.score||0),value),day})});
+     if(current && current.player_id===playerId){
+       await sbFetch("dlicom_scores?id=eq."+encodeURIComponent(current.id),{method:"PATCH",headers:{"Prefer":"return=minimal"},body:JSON.stringify({name,score:Math.max(Number(current.score||0),value),day})});
        localStorage.setItem("dlicomLastSyncedName",name);
        await renderLeaderboard();
        return;
